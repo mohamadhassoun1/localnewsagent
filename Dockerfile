@@ -6,14 +6,13 @@ WORKDIR /app
 
 # copy root package files for frontend
 COPY package*.json ./
-# If there's a lockfile, copy it too
 COPY package-lock.json* .npmrc* ./  
 
-RUN npm ci --silent || npm install --silent
+RUN npm install
 
 # Copy the whole repo and build frontend
 COPY . .
-RUN npm run build --silent
+RUN npm run build
 
 # 2) Production image: backend serves the built frontend
 FROM node:18-alpine AS runner
@@ -21,7 +20,7 @@ WORKDIR /app/backend
 
 # Install backend deps
 COPY backend/package*.json ./
-RUN npm ci --omit=dev || npm install --omit=dev
+RUN npm install
 
 # Copy backend source and the built frontend from builder
 COPY backend/ ./
@@ -33,3 +32,4 @@ EXPOSE 8080
 
 # Start the backend (which now serves the built frontend)
 CMD ["node", "index.js"]
+
