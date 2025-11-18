@@ -1,0 +1,282 @@
+LocalNewsAgent Project Structure
+═════════════════════════════════════════════════════════════════════════════
+
+blog/
+│
+├── 📄 Core Application (Ready to Run!)
+│   ├── main.py                                 ⭐ MAIN ENTRY POINT
+│   │   └─ Run with: python main.py
+│   │
+│   └── src/                                    🧩 MODULES
+│       ├── __init__.py                         (package marker)
+│       ├── discovery.py                        (A. Topic discovery - RSS/SERP)
+│       ├── extractor.py                        (B. Content extraction - facts/bullets)
+│       ├── composer.py                         (C. Article generation - LLM/fallback)
+│       ├── qa.py                               (E. Quality assurance - validation)
+│       └── output.py                           (F. Output - JSON/HTML/logs)
+│
+├── ⚙️ Configuration Files (Edit These!)
+│   ├── rss_feeds.txt                           📋 RSS feed URLs (one per line)
+│   ├── sites.txt                               🌐 Base URLs to crawl (one per line)
+│   └── requirements.txt                        📦 Python dependencies
+│
+├── 📖 Documentation (Read These!)
+│   ├── README.md                               📚 Full system documentation
+│   ├── QUICKSTART.md                           ⚡ 5-minute setup guide
+│   ├── ARCHITECTURE.md                         🏗️ Technical deep-dive
+│   ├── CONFIG_GUIDE.md                         ⚙️ Configuration reference
+│   ├── GETTING_STARTED.txt                     👋 First-time setup guide
+│   └── DEPLOYMENT_REPORT.txt                   ✅ This deployment summary
+│
+├── 📁 Output Directories (Auto-Created)
+│   ├── drafts/                                 📄 Publish-ready articles
+│   │   ├── {slug}__{timestamp}.json            JSON with metadata + HTML
+│   │   ├── {slug}.html                         Standalone HTML page
+│   │   └── ...
+│   │
+│   ├── logs/                                   📝 Session & activity logs
+│   │   ├── session_{timestamp}.log             Full workflow transcript
+│   │   ├── {slug}.log                          Per-article details
+│   │   └── ...
+│   │
+│   └── published/                              ✔️ Published articles (manual)
+│       ├── {slug}__{timestamp}_published.json
+│       └── ...
+│
+└── .gitignore (optional)
+    └─ For version control (drafts/, logs/, published/)
+
+
+═════════════════════════════════════════════════════════════════════════════
+USAGE FLOW
+═════════════════════════════════════════════════════════════════════════════
+
+1. SETUP
+   ├─ pip install -r requirements.txt
+   └─ (optional) pip install gpt4all
+
+2. CONFIGURE
+   ├─ Edit rss_feeds.txt (add RSS feed URLs)
+   └─ Edit sites.txt (add base URLs to crawl)
+
+3. RUN
+   ├─ python main.py              # Default (3 topics, 800+ words)
+   ├─ python main.py --top-topics 5        # 5 topics
+   ├─ python main.py --min-words 1000      # 1000+ words
+   ├─ python main.py --no-llm              # Skip LLM, use fallback
+   └─ python main.py --queries "AI" "blockchain"
+
+4. OUTPUTS
+   ├─ Check ./drafts/ for JSON + HTML
+   ├─ Check ./logs/ for session details
+   └─ Review article quality
+
+5. PUBLISH
+   ├─ Review drafts in ./drafts/
+   ├─ Edit as needed
+   ├─ Generate images from prompts
+   ├─ Post to CMS
+   └─ Move to ./published/ (optional)
+
+
+═════════════════════════════════════════════════════════════════════════════
+WORKFLOW (A → F)
+═════════════════════════════════════════════════════════════════════════════
+
+A. DISCOVERY (discovery.py)
+   ├─ Load RSS feeds from rss_feeds.txt
+   ├─ Discover /rss /feed endpoints from sites.txt
+   ├─ (Optional) Scrape DuckDuckGo for queries
+   └─ Output: List[Topic] sorted by trend_score
+
+B. EXTRACTION (extractor.py)
+   ├─ Fetch article URLs
+   ├─ Detect paywalls (skip if found)
+   ├─ Extract 5-12 bullet facts (≤25 words each)
+   ├─ Rewrite excerpts (≤50 words)
+   └─ Output: List[ExtractedArticle]
+
+C. COMPOSITION (composer.py)
+   ├─ Try local LLM (gpt4all) if available
+   ├─ Fallback to rule-based generation
+   ├─ Generate 800-1600 word article
+   ├─ Create HTML with structure
+   ├─ Generate 3 image prompts (16:9)
+   └─ Output: ComposedArticle (with all metadata)
+
+D. SEO & IMAGES (integrated in C)
+   ├─ SEO Title (≤60 chars)
+   ├─ Meta Description (120-155 chars)
+   ├─ Keywords (8-12 items)
+   ├─ Tags (5-8 items)
+   ├─ Image Prompts (3 variations + alt_text)
+   └─ Internal links (/tag/*, /category/*)
+
+E. QA (qa.py)
+   ├─ Word count >= minimum (default: 800)
+   ├─ Plagiarism check (20-char threshold)
+   ├─ AdSense safety (block disallowed content)
+   ├─ Structural validation (Our take + Sources)
+   └─ Auto-regenerate if fail (up to 2x)
+
+F. OUTPUT (output.py)
+   ├─ Save JSON draft to ./drafts/
+   ├─ Save HTML to ./drafts/
+   ├─ Create session log to ./logs/
+   └─ Display results
+
+
+═════════════════════════════════════════════════════════════════════════════
+FILE PURPOSES
+═════════════════════════════════════════════════════════════════════════════
+
+main.py (15 KB)
+  • CLI entry point
+  • Orchestrates A→F workflow
+  • Accepts command-line arguments
+  • Logs entire session
+  • Provides user feedback
+
+src/discovery.py (12 KB)
+  • Fetches RSS feeds
+  • Discovers feed URLs from sites
+  • Scrapes DuckDuckGo results (no API)
+  • Builds topic list with trend scores
+  • Exports dataclass: Topic
+
+src/extractor.py (8 KB)
+  • Fetches article content
+  • Detects paywalls
+  • Extracts facts and links
+  • Rewrites excerpts
+  • Exports dataclass: ExtractedArticle
+
+src/composer.py (18 KB)
+  • Interfaces with local LLM (gpt4all/Ollama)
+  • Falls back to rule-based generation
+  • Generates article HTML
+  • Creates SEO metadata
+  • Generates image prompts
+  • Exports dataclass: ComposedArticle
+
+src/qa.py (6 KB)
+  • Checks word count
+  • Detects plagiarism (20-char threshold)
+  • Filters AdSense-unsafe content
+  • Validates structure
+  • Exports dataclass: QAResult
+
+src/output.py (10 KB)
+  • Saves JSON drafts
+  • Generates HTML pages
+  • Creates session logs
+  • Manages file I/O
+  • Lists drafts/published
+
+rss_feeds.txt (0.4 KB)
+  • RSS feed URLs (one per line)
+  • Pre-configured examples
+  • Add your own feeds here
+
+sites.txt (0.3 KB)
+  • Base URLs to crawl
+  • Agent discovers /rss /feed endpoints
+  • Pre-configured examples
+  • Add your own sites here
+
+requirements.txt (0.5 KB)
+  • Core: feedparser, requests, beautifulsoup4, lxml
+  • Optional: gpt4all (local LLM)
+  • Optional: playwright (dynamic content)
+
+
+═════════════════════════════════════════════════════════════════════════════
+JSON OUTPUT FORMAT
+═════════════════════════════════════════════════════════════════════════════
+
+Location: ./drafts/{slug}__{timestamp}.json
+
+Fields:
+  title                    Article headline (≤100 chars)
+  article_html             Full HTML with <h2>, <p>, <ul>/<li>
+  summary                  40-60 word summary
+  word_count               Total words in article
+  tags                     5-8 category tags
+  slug                     URL-friendly slug
+  seo_title                ≤60 chars for search results
+  meta_description         120-155 chars for meta tag
+  keywords                 8-12 SEO keywords
+  image_prompt_main        Primary 16:9 image prompt
+  image_prompt_alt1        Alternative image prompt
+  image_prompt_alt2        Another alternative prompt
+  alt_text                 ≤120 chars for accessibility
+  sources                  [{name, url}, ...]
+  cta                      Call-to-action text
+  our_take                 1-sentence analysis
+  published_at             ISO timestamp
+
+
+═════════════════════════════════════════════════════════════════════════════
+LOG FILE FORMAT
+═════════════════════════════════════════════════════════════════════════════
+
+Location: ./logs/{slug}.log
+
+Contains:
+  DISCOVERY PHASE         - Topics found, sources processed
+  EXTRACTION PHASE        - Facts extracted, paywalls skipped
+  COMPOSITION PHASE       - LLM used or fallback method
+  QA & VALIDATION PHASE   - Validation results, issues if any
+  OUTPUT PHASE            - Files saved, locations
+  SOURCES USED            - All source URLs with names
+
+
+═════════════════════════════════════════════════════════════════════════════
+COMMAND REFERENCE
+═════════════════════════════════════════════════════════════════════════════
+
+Default (3 articles):
+  python main.py
+
+Custom topic count:
+  python main.py --top-topics 5
+
+Minimum word count:
+  python main.py --min-words 1200
+
+Skip LLM (faster):
+  python main.py --no-llm
+
+Custom searches:
+  python main.py --queries "AI news" "blockchain"
+
+Everything combined:
+  python main.py --top-topics 5 --min-words 1000 --no-llm --queries "AI" "tech"
+
+Custom config files:
+  python main.py --rss-file my_feeds.txt --sites-file my_sites.txt
+
+
+═════════════════════════════════════════════════════════════════════════════
+QUICK START
+═════════════════════════════════════════════════════════════════════════════
+
+1. Install:
+   pip install -r requirements.txt
+
+2. Run:
+   python main.py
+
+3. Check output:
+   ls drafts/
+
+4. View article:
+   cat drafts/article-slug.html
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+For detailed information, see: README.md
+For setup instructions, see: QUICKSTART.md
+For technical details, see: ARCHITECTURE.md
+For configuration help, see: CONFIG_GUIDE.md
