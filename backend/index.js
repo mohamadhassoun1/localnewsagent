@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenAI } = require("@google/genai");
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 
@@ -15,6 +17,17 @@ app.use(cors({
 app.options('*', cors());
 
 app.use(express.json());
+
+// Serve frontend static files if build exists
+const staticDir = path.join(__dirname, 'dist');
+if (fs.existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+  app.get('*', (req, res, next) => {
+    const indexFile = path.join(staticDir, 'index.html');
+    if (fs.existsSync(indexFile)) return res.sendFile(indexFile);
+    next();
+  });
+}
 
 // --- IN-MEMORY DATA STORE ---
 const storesData = [
