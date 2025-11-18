@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: localnewsagent
+    runtime: docker
+    plan: free
+    healthCheckPath: /dashboard
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: PUBLISH_TOKEN
+        value: render-deployed-secret
