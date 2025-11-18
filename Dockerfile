@@ -21,7 +21,7 @@ WORKDIR /app/backend
 
 # Install backend deps
 COPY backend/package*.json ./
-RUN npm ci --production --silent || npm install --only=production --silent
+RUN npm ci --production --silent || npm install --omit=dev --silent
 
 # Copy backend source and the built frontend from builder
 COPY backend/ ./
